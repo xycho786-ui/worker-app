@@ -1,7 +1,18 @@
+"use client";
+
 import { UserCircle, Shield, Settings, HelpCircle, Info, LogOut } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function Profile() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   return (
     <div className="flex flex-col h-full bg-white pb-24">
       {/* Top App Bar */}
@@ -27,56 +38,56 @@ export default function Profile() {
             <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 leading-tight">Professional User</h2>
-            <p className="text-sm text-gray-500">premium_member@service.com</p>
+            <h2 className="text-xl font-bold text-gray-900 leading-tight">Current User</h2>
+            <p className="text-sm text-gray-500">user@example.com</p>
           </div>
         </div>
 
         {/* Menu Items */}
         <div className="space-y-2 mb-8">
           <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 transition-colors text-gray-700 font-medium">
-            <UserCircle size={22} className="text-[#3b82f6]" />
+            <UserCircle size={22} className="text-primary" />
             <span className="flex-1 text-left">Account</span>
           </button>
           
-          <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-blue-50/50 hover:bg-blue-50 transition-colors text-blue-900 font-medium border border-blue-100/50">
-            <Shield size={22} className="text-[#3b82f6]" />
-            <span className="flex-1 text-left text-[#3b82f6] font-semibold">Premium</span>
-            <span className="bg-[#1d4ed8] text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
+          <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors text-gray-900 font-medium border border-primary/20">
+            <Shield size={22} className="text-primary" />
+            <span className="flex-1 text-left text-primary font-semibold">Verified</span>
+            <span className="bg-primary text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
               Active
             </span>
           </button>
           
           <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 transition-colors text-gray-700 font-medium">
-            <Settings size={22} className="text-[#3b82f6]" />
+            <Settings size={22} className="text-primary" />
             <span className="flex-1 text-left">Settings</span>
           </button>
           
           <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 transition-colors text-gray-700 font-medium">
-            <HelpCircle size={22} className="text-[#3b82f6]" />
+            <HelpCircle size={22} className="text-primary" />
             <span className="flex-1 text-left">Help Desk</span>
           </button>
           
           <button className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-gray-50 transition-colors text-gray-700 font-medium">
-            <Info size={22} className="text-[#3b82f6]" />
+            <Info size={22} className="text-primary" />
             <span className="flex-1 text-left">About Us</span>
           </button>
         </div>
 
         {/* Premium Upgrade Card */}
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-[20px] p-5 mb-8 border border-gray-200">
-          <h3 className="font-bold text-gray-900 mb-1">Unlock Insights</h3>
-          <p className="text-sm text-gray-600 mb-4">Get full access to all professional analytics.</p>
-          <button className="bg-[#1d4ed8] hover:bg-blue-800 text-white font-semibold py-2 px-5 rounded-full text-sm transition-colors shadow-sm shadow-blue-500/20">
-            Upgrade
+          <h3 className="font-bold text-gray-900 mb-1">Upgrade Profile</h3>
+          <p className="text-sm text-gray-600 mb-4">Get verified to receive more job requests.</p>
+          <button className="bg-primary hover:bg-primary-light text-white font-semibold py-2 px-5 rounded-full text-sm transition-colors shadow-sm shadow-primary/20">
+            Verify Now
           </button>
         </div>
 
         {/* Footer */}
         <div className="flex justify-between items-center px-2 py-4 border-t border-gray-50">
-          <span className="text-xs font-semibold text-gray-400 tracking-wider">VERSION 2.4.0</span>
-          <button className="text-sm font-bold text-[#3b82f6] hover:text-blue-800 transition-colors flex items-center gap-1.5 uppercase tracking-wide">
-            LOG OUT
+          <span className="text-xs font-semibold text-gray-400 tracking-wider">VERSION 0.1.0</span>
+          <button onClick={handleLogout} className="text-sm font-bold text-primary hover:text-primary-light transition-colors flex items-center gap-1.5 uppercase tracking-wide">
+            <LogOut size={16} /> LOG OUT
           </button>
         </div>
 

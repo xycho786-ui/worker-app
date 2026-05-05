@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Briefcase, DollarSign, User } from "lucide-react";
+import { Home, Briefcase, Search, MessageCircle, Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -8,7 +8,9 @@ import clsx from "clsx";
 const navItems = [
   { name: "Home", href: "/", icon: Home },
   { name: "Jobs", href: "/jobs", icon: Briefcase },
-  { name: "Earnings", href: "/earnings", icon: DollarSign },
+  { name: "Explore", href: "/explore", icon: Search },
+  { name: "Chat", href: "/chat", icon: MessageCircle },
+  { name: "Alerts", href: "/notifications", icon: Bell }, // "Alerts" so it fits nicely, or "Notify"
   { name: "Profile", href: "/profile", icon: User },
 ];
 

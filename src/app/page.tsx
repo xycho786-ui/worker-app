@@ -78,7 +78,7 @@ export default function Home() {
 
         {/* Filter Chips */}
         <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
-          <button className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium bg-[#F08080] text-white shadow-sm shadow-[#F08080]/30 transition-transform active:scale-95">
+          <button className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium bg-primary text-white shadow-sm shadow-primary/30 transition-transform active:scale-95">
             Nearby
           </button>
           <button className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -100,7 +100,7 @@ export default function Home() {
             {MOCK_WORKERS.map((worker) => (
               <div key={worker.id} className="bg-white rounded-[20px] shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md">
                 <div className="h-44 w-full relative">
-                  <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-md text-[#FFDAB9] text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border border-white/10">
+                  <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-md text-highlight text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border border-white/10">
                     Urgently Hiring
                   </div>
                   <Image 
@@ -115,7 +115,7 @@ export default function Home() {
                 <div className="p-5 flex flex-col gap-3">
                   <div className="flex justify-between items-start gap-2">
                     <h3 className="text-[19px] font-bold text-gray-900 leading-tight">{worker.title}</h3>
-                    <span className="text-[#D45E5E] font-bold whitespace-nowrap text-lg">{worker.rate}</span>
+                    <span className="text-dark font-bold whitespace-nowrap text-lg">{worker.rate}</span>
                   </div>
                   
                   <div className="flex items-center text-[13px] text-gray-500 gap-1.5">
@@ -139,7 +139,7 @@ export default function Home() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3 mt-4">
-                    <button className="w-full bg-[#F4978E] hover:bg-[#F08080] text-white font-semibold py-2.5 rounded-xl transition-colors text-sm shadow-sm shadow-[#F4978E]/20 active:scale-[0.98]">
+                    <button className="w-full bg-primary-light hover:bg-primary text-white font-semibold py-2.5 rounded-xl transition-colors text-sm shadow-sm shadow-primary-light/20 active:scale-[0.98]">
                       Quick Apply
                     </button>
                     <Link href={`/jobs/${worker.id}`} className="w-full bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 font-semibold py-2.5 rounded-xl transition-colors text-sm text-center flex items-center justify-center active:scale-[0.98]">
