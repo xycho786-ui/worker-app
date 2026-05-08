@@ -25,7 +25,7 @@ const TOP_WORKERS = [
     title: "Professional Cleaner",
     rating: 4.8,
     reviews: 89,
-    image: "https://images.unsplash.com/photo-1581579438747-104c54099518?auto=format&fit=crop&q=80&w=150&h=150",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150&h=150",
   }
 ];
 
