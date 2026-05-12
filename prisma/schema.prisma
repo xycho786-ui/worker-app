@@ -3,12 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(uuid())
   email     String   @unique
   phone     String?  @unique
   name      String
@@ -23,13 +22,14 @@ model User {
 }
 
 model WorkerProfile {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String   @unique @db.ObjectId
+  id           String   @id @default(uuid())
+  userId       String   @unique
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   skills       String[] // e.g., ["Electrician", "Plumber"]
   experience   Int      // years of experience
-  location     Location?
+  locationId   String?  @unique
+  location     Location? @relation(fields: [locationId], references: [id])
   isOnline     Boolean  @default(false)
   hourlyRate   Float?
   rating       Float    @default(0.0)
@@ -43,19 +43,21 @@ model WorkerProfile {
   updatedAt    DateTime @updatedAt
 }
 
-type Location {
-  lat Float
-  lng Float
+model Location {
+  id      String @id @default(uuid())
+  lat     Float
+  lng     Float
   address String?
+  worker  WorkerProfile?
 }
 
 model Booking {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   
-  customerId  String   @db.ObjectId
+  customerId  String
   customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
   
-  workerId    String   @db.ObjectId
+  workerId    String
   worker      WorkerProfile @relation("WorkerBookings", fields: [workerId], references: [id])
   
   status      BookingStatus @default(PENDING)
@@ -68,15 +70,15 @@ model Booking {
 }
 
 model Review {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   
   rating      Int      // 1 to 5
   comment     String?
   
-  reviewerId  String   @db.ObjectId
+  reviewerId  String
   reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
   
-  workerId    String   @db.ObjectId
+  workerId    String
   worker      WorkerProfile @relation("WorkerReviews", fields: [workerId], references: [id])
   
   createdAt   DateTime @default(now())

@@ -24,6 +24,13 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    // CRITICAL CHECK: Ensure env vars are loaded
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setError("Server needs to be restarted! Press Ctrl+C in your terminal and run 'npm run dev' again to load the new .env.local file.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email,

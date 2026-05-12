@@ -5,30 +5,26 @@ import { Role } from '@prisma/client';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, name, phone, role } = body;
+    const { id, email, name, phone, role } = body;
 
-    if (!email || !name) {
+    if (!id || !email || !name) {
       return NextResponse.json(
         { message: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { message: 'User already exists in database' },
-        { status: 400 }
-      );
-    }
-
-    // Create user in Prisma
-    const user = await prisma.user.create({
-      data: {
+    // Upsert user in Prisma
+    const user = await prisma.user.upsert({
+      where: { id },
+      update: {
+        email,
+        name,
+        phone: phone || null,
+        role: (role as Role) || 'CUSTOMER',
+      },
+      create: {
+        id,
         email,
         name,
         phone: phone || null,
@@ -36,10 +32,12 @@ export async function POST(request: Request) {
       },
     });
 
-    // If role is WORKER, also create an empty worker profile
+    // If role is WORKER, ensure worker profile exists
     if (user.role === 'WORKER') {
-      await prisma.workerProfile.create({
-        data: {
+      await prisma.workerProfile.upsert({
+        where: { userId: user.id },
+        update: {}, // No changes needed if exists
+        create: {
           userId: user.id,
           skills: [],
           experience: 0,
