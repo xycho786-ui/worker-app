@@ -64,8 +64,15 @@ export default function SignupPage() {
         });
 
         if (!res.ok) {
-          const apiError = await res.json();
-          throw new Error(apiError.message || "Failed to create user profile");
+          let errorMessage = "Failed to create user profile";
+          try {
+            const apiError = await res.json();
+            errorMessage = apiError.message || errorMessage;
+          } catch (jsonParseError) {
+            console.error("API returned non-JSON error response:", res.status, res.statusText);
+            errorMessage = `Server error (${res.status}): Please check the server logs. Database connection might be failing.`;
+          }
+          throw new Error(errorMessage);
         }
       }
 
