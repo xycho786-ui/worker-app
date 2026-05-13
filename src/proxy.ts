@@ -16,6 +16,11 @@ export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("Proxy: Supabase credentials missing");
+    return response;
+  }
+
   const supabase = createServerClient(
     supabaseUrl,
     supabaseKey,
@@ -66,14 +71,37 @@ export async function proxy(request: NextRequest) {
 
   // Redirect logic
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup');
-  const isPublicFile = request.nextUrl.pathname === '/favicon.ico';
+  const isPublicFile = request.nextUrl.pathname === '/favicon.ico' || request.nextUrl.pathname.startsWith('/_next');
 
   if (!user && !isAuthPage && !isPublicFile) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
   if (user && isAuthPage) {
-    return NextResponse.redirect(new URL('/', request.url))
+    const url = request.nextUrl.clone()
+    const role = user.user_metadata?.role || 'CUSTOMER'
+    
+    if (role === 'WORKER') {
+      url.pathname = '/worker/dashboard'
+    } else {
+      url.pathname = '/customer/dashboard'
+    }
+    return NextResponse.redirect(url)
+  }
+  
+  // Optional: Also redirect from root '/' to the specific dashboards if logged in
+  if (user && request.nextUrl.pathname === '/') {
+    const url = request.nextUrl.clone()
+    const role = user.user_metadata?.role || 'CUSTOMER'
+    
+    if (role === 'WORKER') {
+      url.pathname = '/worker/dashboard'
+    } else {
+      url.pathname = '/customer/dashboard'
+    }
+    return NextResponse.redirect(url)
   }
 
   return response

@@ -43,6 +43,8 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: formData.name,
+            role: formData.role,
+            phone: formData.phone,
           }
         }
       });

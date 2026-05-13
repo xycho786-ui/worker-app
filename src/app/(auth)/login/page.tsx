@@ -39,10 +39,74 @@ export default function LoginPage() {
 
       if (authError) throw authError;
 
-      router.push("/");
+      // Ensure user is synced with Prisma on login
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const userRole = authUser.user_metadata?.role || 'CUSTOMER';
+        
+        await fetch("/api/auth/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: authUser.id, 
+            email: authUser.email,
+            name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+            role: userRole,
+          }),
+        }).catch(err => console.error("Sync error during login:", err));
+
+        if (userRole === 'WORKER') {
+          router.push("/worker/dashboard");
+        } else {
+          router.push("/customer/dashboard");
+        }
+      } else {
+        router.push("/");
+      }
       
     } catch (err: any) {
-      setError(err.message || "Invalid login credentials.");
+      const errorMessage = err.message || "Invalid login credentials.";
+      
+      // Auto-recovery mechanism: If login fails, check if the account just doesn't exist
+      // by attempting to sign them up right away.
+      if (errorMessage.includes("Invalid login credentials")) {
+        try {
+          console.log("Login failed, attempting auto-signup fallback...");
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+              data: { full_name: formData.email.split('@')[0], role: 'CUSTOMER' }
+            }
+          });
+
+          if (!signUpError && signUpData.user) {
+            // Auto-sync after auto-signup
+            await fetch("/api/auth/sync", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: signUpData.user.id, 
+                email: signUpData.user.email,
+                name: formData.email.split('@')[0],
+                role: 'CUSTOMER',
+              }),
+            }).catch(e => console.error("Sync error:", e));
+
+            setError("Account didn't exist, so we automatically created it for you! Please click Login again to enter.");
+            setLoading(false);
+            return;
+          } else if (signUpError && signUpError.message.includes("already registered")) {
+             setError("Your password is wrong! Please try again or create a new account with a different email.");
+             setLoading(false);
+             return;
+          }
+        } catch (autoErr) {
+          console.error("Auto signup failed", autoErr);
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
