@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +33,8 @@ export default function LoginPage() {
 
       if (authError) throw authError;
 
+      // Refresh to ensure server components read the new cookie
+      router.refresh();
       router.push("/");
       
     } catch (err: any) {
