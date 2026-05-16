@@ -1,24 +1,23 @@
 "use client";
 
-import { Home, Briefcase, Search, MessageCircle, Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { clsx } from "clsx";
+import { Home, Briefcase, MessageSquare, User } from "lucide-react";
+import clsx from "clsx";
 
 const navItems = [
   { name: "Home", href: "/", icon: Home },
   { name: "Jobs", href: "/jobs", icon: Briefcase },
-  { name: "Explore", href: "/explore", icon: Search },
-  { name: "Chat", href: "/chat", icon: MessageCircle },
-  { name: "Alerts", href: "/notifications", icon: Bell }, // "Alerts" so it fits nicely, or "Notify"
+  { name: "Chat", href: "/chat", icon: MessageSquare },
   { name: "Profile", href: "/profile", icon: User },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide navigation on auth pages
-  if (pathname === '/login' || pathname === '/signup') {
+  // Hide BottomNav on auth pages
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  if (isAuthPage) {
     return null;
   }
 

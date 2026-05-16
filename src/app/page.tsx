@@ -1,8 +1,11 @@
-import { MapPin, Star, UserIcon, Search } from "lucide-react";
+import { MapPin, Star, UserIcon, Search, Menu, SlidersHorizontal, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import HomeInteractions from "@/components/HomeInteractions";
 import { createClient } from "@/utils/supabase/server";
+
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=300&h=200";
 
 export default async function Home({
   searchParams,
@@ -47,6 +50,7 @@ export default async function Home({
     include: {
       user: true,
       category: true,
+      location: true,
     },
     take: 10,
     orderBy,
@@ -59,8 +63,35 @@ export default async function Home({
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto px-4 pb-6 space-y-6">
         
+        {/* Search Bar */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-11 pr-10 py-3.5 border border-gray-200 rounded-2xl leading-5 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] transition-all"
+            placeholder="Search e.g. Electrician"
+          />
+        </div>
+
+        {/* Filter Chips */}
+        <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+          <button className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium bg-primary text-white shadow-sm shadow-primary/30 transition-transform active:scale-95">
+            Nearby
+          </button>
+          <button className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
+            Newest
+          </button>
+          <button className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
+            $40/hr+
+          </button>
+        </div>
+
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">{workers.length} Jobs found</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            {workers.length > 0 ? `${workers.length} Workers found` : "Available Workers"}
+          </h2>
           
           {/* Worker Cards List */}
           <div className="space-y-5">
@@ -71,10 +102,13 @@ export default async function Home({
                     <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-md text-highlight text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-md border border-white/10">
                       {worker.isOnline ? 'Available Now' : 'Available'}
                     </div>
-                    {/* Placeholder image since we don't store one yet */}
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <UserIcon size={48} className="text-gray-400" />
-                    </div>
+                    <Image 
+                      src={FALLBACK_IMAGE} 
+                      alt={worker.user.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
                   </div>
                   
                   <div className="p-5 flex flex-col gap-3">
@@ -89,7 +123,7 @@ export default async function Home({
                     
                     <div className="flex items-center text-[13px] text-gray-500 gap-1.5">
                       <MapPin size={14} className="text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{worker.locationAddress || 'Location not specified'}</span>
+                      <span className="truncate">{worker.locationAddress || worker.location?.address || 'Location not specified'}</span>
                     </div>
                     
                     <p className="text-[14px] text-gray-600 line-clamp-2 leading-relaxed">
@@ -114,6 +148,7 @@ export default async function Home({
                       </Link>
                       <Link href={`/jobs/${worker.id}`} className="w-full bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 font-semibold py-2.5 rounded-xl transition-colors text-sm text-center flex items-center justify-center active:scale-[0.98]">
                         View Details
+
                       </Link>
                     </div>
                   </div>
@@ -137,3 +172,4 @@ export default async function Home({
     </div>
   );
 }
+

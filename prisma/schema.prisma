@@ -38,6 +38,8 @@ model WorkerProfile {
   locationLat  Float?
   locationLng  Float?
   locationAddress String?
+  locationId   String?  @unique
+  location     Location? @relation(fields: [locationId], references: [id])
   isOnline     Boolean  @default(false)
   hourlyRate   Float?
   rating       Float    @default(0.0)
@@ -62,6 +64,14 @@ model Category {
   icon        String   // Emoji or icon string
   description String?
   workers     WorkerProfile[]
+}
+
+model Location {
+  id      String @id @default(uuid())
+  lat     Float
+  lng     Float
+  address String?
+  worker  WorkerProfile?
 }
 
 model Booking {

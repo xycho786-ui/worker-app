@@ -1,58 +1,105 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Role } from '@prisma/client';
+import postgres from 'postgres';
+
+export async function GET() {
+  return NextResponse.json({ status: 'API is reachable' });
+}
 
 export async function POST(request: Request) {
+  console.log('API /api/auth/sync: Received POST request');
+  
+  // Use direct postgres client to bypass Prisma client-constructor bugs completely
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    return NextResponse.json({ message: 'Database connection string missing' }, { status: 500 });
+  }
+  
+  const sql = postgres(connectionString);
+
   try {
-    const body = await request.json();
-    const { email, name, phone, role } = body;
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      console.error('API /api/auth/sync: Failed to parse request JSON', e);
+      return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 });
+    }
+    
+    console.log('API /api/auth/sync: Request body:', JSON.stringify(body));
+    const { id, email, name, phone, role } = body;
 
-    if (!email || !name) {
+    if (!id || !email || !name) {
+      console.warn('API /api/auth/sync: Missing required fields');
       return NextResponse.json(
-        { message: 'Missing required fields' },
+        { message: 'Missing required fields: id, email, and name are required' },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    console.log('API /api/auth/sync: Syncing user', id);
+    
+    const userRole = role || 'CUSTOMER';
+    const userPhone = phone || null;
 
-    if (existingUser) {
-      return NextResponse.json(
-        { message: 'User already exists in database' },
-        { status: 400 }
-      );
+    // First, check if user exists by email
+    const existingUsers = await sql`SELECT id FROM "User" WHERE email = ${email}`;
+    
+    let userRecord;
+
+    if (existingUsers.length > 0) {
+      console.log('API /api/auth/sync: User found by email, updating details');
+      const updated = await sql`
+        UPDATE "User" 
+        SET id = ${id}, name = ${name}, phone = ${userPhone}, role = CAST(${userRole} AS "Role"), "updatedAt" = NOW()
+        WHERE email = ${email}
+        RETURNING *
+      `;
+      userRecord = updated[0];
+    } else {
+      console.log('API /api/auth/sync: User not found, creating new user');
+      const inserted = await sql`
+        INSERT INTO "User" (id, email, name, phone, role, "updatedAt")
+        VALUES (${id}, ${email}, ${name}, ${userPhone}, CAST(${userRole} AS "Role"), NOW())
+        RETURNING *
+      `;
+      userRecord = inserted[0];
     }
 
-    // Create user in Prisma
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        phone: phone || null,
-        role: (role as Role) || 'CUSTOMER',
-      },
-    });
+    // If role is WORKER, ensure worker profile exists
+    if (userRecord.role === 'WORKER') {
+      console.log('API /api/auth/sync: Ensuring worker profile for', userRecord.id);
+      await sql`
+        INSERT INTO "WorkerProfile" (id, "userId", skills, experience, "isOnline", rating, "totalReviews", "updatedAt")
+        VALUES (gen_random_uuid(), ${userRecord.id}, ARRAY[]::text[], 0, false, 0.0, 0, NOW())
+        ON CONFLICT ("userId") DO NOTHING
+      `;
+    }
 
-    // If role is WORKER, also create an empty worker profile
-    if (user.role === 'WORKER') {
-      await prisma.workerProfile.create({
-        data: {
-          userId: user.id,
-          skills: [],
-          experience: 0,
+    console.log('API /api/auth/sync: Success');
+    return NextResponse.json({ user: userRecord }, { status: 201 });
+  } catch (error: any) {
+    console.error('API /api/auth/sync: CRITICAL ERROR:', error);
+    
+    // Check for unique constraint violation in Postgres (code 23505)
+    if (error.code === '23505') {
+      return NextResponse.json(
+        { 
+          message: `Account synchronization failed: The phone number or email is already registered to another account.`,
+          code: error.code 
         },
-      });
+        { status: 409 }
+      );
     }
 
-    return NextResponse.json({ user }, { status: 201 });
-  } catch (error) {
-    console.error('Error syncing user:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { 
+        message: error.message ? `Database Error: ${error.message}` : 'Internal server error during user synchronization', 
+        error: error.message || 'Unknown error',
+      },
       { status: 500 }
     );
+  } finally {
+    // Close the connection
+    await sql.end();
   }
 }

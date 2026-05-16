@@ -29,6 +29,13 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    // CRITICAL CHECK: Ensure env vars are loaded
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setError("Server needs to be restarted! Press Ctrl+C in your terminal and run 'npm run dev' again to load the new .env.local file.");
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Sign up with Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -37,6 +44,8 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: formData.name,
+            role: formData.role,
+            phone: formData.phone,
           }
         }
       });
@@ -49,7 +58,7 @@ export default function SignupPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: authData.user.id, // we don't need to pass supabase id to prisma unless we want to link them
+            id: authData.user.id, 
             email: formData.email,
             name: formData.name,
             phone: formData.phone,
@@ -58,8 +67,15 @@ export default function SignupPage() {
         });
 
         if (!res.ok) {
-          const apiError = await res.json();
-          throw new Error(apiError.message || "Failed to create user profile");
+          let errorMessage = "Failed to create user profile";
+          try {
+            const apiError = await res.json();
+            errorMessage = apiError.message || errorMessage;
+          } catch (jsonParseError) {
+            console.error("API returned non-JSON error response:", res.status, res.statusText);
+            errorMessage = `Server error (${res.status}): Please check the server logs. Database connection might be failing.`;
+          }
+          throw new Error(errorMessage);
         }
       }
 
