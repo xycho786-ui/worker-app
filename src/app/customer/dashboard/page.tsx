@@ -19,7 +19,7 @@ export default function CustomerDashboard() {
             </div>
             <span className="text-sm font-medium text-gray-700">Find Workers</span>
           </Link>
-          <Link href="/jobs/active" className="flex flex-col items-center gap-2 flex-1">
+          <Link href="/customer/jobs" className="flex flex-col items-center gap-2 flex-1">
             <div className="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
               <Briefcase size={24} />
             </div>

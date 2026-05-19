@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, Star, UserIcon, ShieldCheck } from "lucide-react";
 import BookingForm from "./BookingForm";
 
-export default async function WorkerProfilePage({ params }: { params: { id: string } }) {
+export default async function WorkerProfilePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const worker = await prisma.workerProfile.findUnique({
     where: { id: params.id },
     include: {

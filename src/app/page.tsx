@@ -7,11 +7,10 @@ import { createClient } from "@/utils/supabase/server";
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=300&h=200";
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: { search?: string; filter?: string };
+export default async function Home(props: {
+  searchParams: Promise<{ search?: string; filter?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   // Fetch session for sidebar
   const supabase = await createClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();

@@ -5,27 +5,20 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
 const navItems = [
-  { name: "Home", href: "/worker/dashboard", icon: "🏠", baseHref: "/worker/dashboard" },
-  { name: "Jobs", href: "/jobs", icon: "💼", baseHref: "/jobs" },
-  { name: "Chat", href: "/chat", icon: "💬", baseHref: "/chat" },
-  { name: "Alerts", href: "/notifications", icon: "🔔", baseHref: "/notifications" },
-  { name: "Profile", href: "/profile", icon: "👤", baseHref: "/profile" },
+  { name: "Home", href: "/customer/dashboard", icon: "🏠" },
+  { name: "Jobs", href: "/customer/jobs", icon: "💼" },
+  { name: "Chat", href: "/customer/chat", icon: "💬" },
+  { name: "Alerts", href: "/customer/notifications", icon: "🔔" },
+  { name: "Profile", href: "/customer/profile", icon: "👤" },
 ];
 
-export default function BottomNav() {
+export default function CustomerBottomNav() {
   const pathname = usePathname();
-
-  // Hide BottomNav on auth pages
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
-  if (isAuthPage) {
-    return null;
-  }
 
   return (
     <div className="fixed bottom-0 w-full max-w-md bg-white border-t border-[#F0F0F0] px-4 py-2 flex justify-between items-center z-50">
       {navItems.map((item) => {
-        // Handle root path mapping to dashboard logic if necessary
-        const isActive = pathname === item.href || (item.name === "Home" && pathname === "/customer/dashboard");
+        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link

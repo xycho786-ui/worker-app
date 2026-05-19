@@ -12,8 +12,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import BottomNav from "@/components/BottomNav";
-
 export const metadata: Metadata = {
   title: "WBSP - Find Skilled Workers",
   description: "Connect with nearby skilled workers instantly.",
@@ -32,7 +30,6 @@ export default function RootLayout({
       <body className="min-h-full flex justify-center bg-gray-50 text-gray-900">
         <div className="w-full max-w-md min-h-screen bg-white shadow-xl relative flex flex-col pb-20">
           {children}
-          <BottomNav />
         </div>
       </body>
     </html>

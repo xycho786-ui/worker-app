@@ -43,20 +43,65 @@ export const updateSession = async (request: NextRequest) => {
     request.nextUrl.pathname.startsWith('/jobs') || 
     request.nextUrl.pathname.startsWith('/chat') || 
     request.nextUrl.pathname.startsWith('/notifications') || 
-    request.nextUrl.pathname.startsWith('/profile');
+    request.nextUrl.pathname.startsWith('/profile') ||
+    request.nextUrl.pathname.startsWith('/worker') ||
+    request.nextUrl.pathname.startsWith('/customer');
 
   // Redirect unauthenticated users away from protected pages
   if (!user && isProtectedPage) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    // Crucial: copy over session cookies so token refresh isn't lost
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
   }
 
-  // Redirect authenticated users away from auth pages
-  if (user && isAuthPage) {
+  // Redirect authenticated users away from auth pages or root
+  if (user && (isAuthPage || request.nextUrl.pathname === '/')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
+    const rawRole = user.user_metadata?.role;
+    const role = rawRole ? String(rawRole).toUpperCase() : 'CUSTOMER';
+    if (role === 'WORKER') {
+      url.pathname = '/worker/dashboard';
+    } else {
+      url.pathname = '/customer/dashboard';
+    }
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return redirectResponse;
+  }
+
+  // Strict Role-Based Route Protection
+  if (user) {
+    const rawRole = user.user_metadata?.role;
+    const role = rawRole ? String(rawRole).toUpperCase() : 'CUSTOMER';
+    const isWorkerPath = request.nextUrl.pathname.startsWith('/worker');
+    const isCustomerPath = request.nextUrl.pathname.startsWith('/customer');
+
+    if (role === 'CUSTOMER' && isWorkerPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/customer/dashboard';
+      const redirectResponse = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach(cookie => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      return redirectResponse;
+    }
+
+    if (role === 'WORKER' && isCustomerPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/worker/dashboard';
+      const redirectResponse = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach(cookie => {
+        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+      return redirectResponse;
+    }
   }
 
   return supabaseResponse;

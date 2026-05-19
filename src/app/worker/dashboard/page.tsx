@@ -1,69 +1,93 @@
 import Link from "next/link";
-import { UserCircle, Calendar, MessageSquare, Briefcase } from "lucide-react";
+import { createClient } from "@/utils/supabase/server";
+import { prisma } from "@/lib/prisma";
 
-export default function WorkerDashboard() {
+export default async function WorkerDashboard() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let dbUser = null;
+  if (user && user.email) {
+    dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+      include: { workerProfile: true }
+    });
+  }
+
+  const name = dbUser?.name?.split(' ')[0] || 'Worker';
+  const isOnline = dbUser?.workerProfile?.isOnline ?? true;
+
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <header className="px-6 py-8 bg-gray-900 text-white pb-16">
-        <div className="flex justify-between items-center">
+    <div className="flex flex-col h-full bg-[#F7F7F8] font-sans pb-24">
+      {/* Top Header */}
+      <div className="bg-white px-4 pt-6 pb-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#E8514A22] to-[#E8514A44] flex items-center justify-center text-[#E8514A] font-bold text-sm">
+            {name.substring(0, 2).toUpperCase()}
+          </div>
           <div>
-            <h1 className="text-2xl font-bold">Worker Portal</h1>
-            <p className="opacity-80 mt-1">Manage your jobs and profile</p>
-          </div>
-          <div className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-bold border border-green-500/30 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Online
+            <div className="font-bold text-base text-[#1A2340]">Hi, {name} 👋</div>
+            <div className="text-xs text-[#888BA0]">Verified Pro</div>
           </div>
         </div>
-      </header>
+        <div className="flex items-center gap-2">
+          <Link href="/worker/notifications" className="bg-[#F7F7F8] rounded-full px-3 py-1.5 flex items-center gap-1.5 cursor-pointer">
+            <span className="text-base">🔔</span>
+          </Link>
+          <div className="flex items-center gap-1.5 bg-[#E6FBF5] rounded-full px-3 py-1.5 cursor-pointer">
+            <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[#00C896]' : 'bg-gray-400'} inline-block`}></span>
+            <span className="text-xs font-bold text-[#00A87A]">{isOnline ? 'Online' : 'Offline'}</span>
+          </div>
+        </div>
+      </div>
 
-      <main className="flex-1 px-4 -mt-8 space-y-6 pb-20">
+      {/* Dark Earnings Card */}
+      <div className="bg-[#1A2340] rounded-2xl p-5 mx-4 mt-4 text-white shadow-md">
+        <div className="text-xs text-[#8A9BBF] mb-1 uppercase tracking-wider">Today's Earnings</div>
+        <div className="text-3xl font-extrabold tracking-tight">
+          ₹0<span className="text-lg font-medium">.00</span>
+        </div>
         
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-900">0</span>
-            <span className="text-xs text-gray-500 font-medium">Active Jobs</span>
+        <div className="flex justify-between mt-5">
+          <div className="text-center">
+            <div className="text-[22px] font-extrabold">-</div>
+            <div className="text-[11px] text-[#8A9BBF] mt-0.5">⭐ Rating</div>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-            <span className="text-2xl font-bold text-primary">$0.00</span>
-            <span className="text-xs text-gray-500 font-medium">Earnings</span>
+          <div className="w-px bg-[#2D3F6A]"></div>
+          <div className="text-center">
+            <div className="text-[22px] font-extrabold">-</div>
+            <div className="text-[11px] text-[#8A9BBF] mt-0.5">✅ Completion</div>
+          </div>
+          <div className="w-px bg-[#2D3F6A]"></div>
+          <div className="text-center">
+            <div className="text-[22px] font-extrabold">0</div>
+            <div className="text-[11px] text-[#8A9BBF] mt-0.5">Jobs Today</div>
           </div>
         </div>
+      </div>
 
-        {/* Dashboard Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Link href="/profile" className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:border-primary/30 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
-              <UserCircle size={20} />
-            </div>
-            <span className="font-semibold text-gray-800">Edit Profile</span>
-          </Link>
-          
-          <Link href="/worker/schedule" className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:border-primary/30 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Calendar size={20} />
-            </div>
-            <span className="font-semibold text-gray-800">Schedule</span>
-          </Link>
-
-          <Link href="/jobs/requests" className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:border-primary/30 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center relative">
-              <Briefcase size={20} />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
-            </div>
-            <span className="font-semibold text-gray-800">Requests</span>
-          </Link>
-
-          <Link href="/chat" className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3 hover:border-primary/30 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center">
-              <MessageSquare size={20} />
-            </div>
-            <span className="font-semibold text-gray-800">Messages</span>
-          </Link>
+      {/* Current Task */}
+      <div className="px-4 mt-5">
+        <div className="font-bold text-[15px] text-[#1A2340] mb-2.5">Current Task</div>
+        <div className="bg-white rounded-2xl p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center text-center">
+          <div className="text-3xl mb-2">📋</div>
+          <div className="text-[14px] font-bold text-[#1A2340]">No active tasks</div>
+          <div className="text-[13px] text-[#888BA0] mt-1">You don't have any ongoing jobs right now.</div>
         </div>
+      </div>
 
-      </main>
+      {/* New Opportunities */}
+      <div className="px-4 mt-5 flex items-center justify-between mb-2">
+        <div className="font-bold text-[15px] text-[#1A2340]">New Opportunities</div>
+      </div>
+
+      <div className="px-4 space-y-3">
+        <div className="bg-white rounded-2xl p-6 shadow-[0_2px_12px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center text-center">
+          <div className="text-3xl mb-2">🔍</div>
+          <div className="text-[14px] font-bold text-[#1A2340]">No jobs available yet</div>
+          <div className="text-[13px] text-[#888BA0] mt-1">We'll notify you when new opportunities appear in your area.</div>
+        </div>
+      </div>
     </div>
   );
 }

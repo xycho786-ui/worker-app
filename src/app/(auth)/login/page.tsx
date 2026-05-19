@@ -44,26 +44,56 @@ export default function LoginPage() {
       // Ensure user is synced with Prisma on login
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
-        const userRole = authUser.user_metadata?.role || 'CUSTOMER';
+        // Make sure role is string and uppercase for robust comparison
+        const rawRole = authUser.user_metadata?.role;
+        const userRole = rawRole ? String(rawRole).toUpperCase() : 'CUSTOMER';
         
-        await fetch("/api/auth/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: authUser.id, 
-            email: authUser.email,
-            name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-            role: userRole,
-          }),
-        }).catch(err => console.error("Sync error during login:", err));
+        let finalRole = userRole;
 
-        if (userRole === 'WORKER') {
+        try {
+          const syncRes = await fetch("/api/auth/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: authUser.id, 
+              email: authUser.email,
+              name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+              role: userRole,
+            }),
+          });
+          
+          if (syncRes.ok) {
+            const data = await syncRes.json();
+            if (data.user && data.user.role) {
+              finalRole = String(data.user.role).toUpperCase();
+              console.log("Login: Using role from DB:", finalRole);
+
+              // Crucial: Update the Supabase session if the role in JWT is missing or out of sync with DB
+              if (userRole !== finalRole || !rawRole) {
+                console.log("Login: Syncing DB role back to Supabase user_metadata");
+                await supabase.auth.updateUser({
+                  data: { role: finalRole }
+                });
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Sync error during login:", err);
+        }
+
+        if (finalRole === 'CUSTOMER') {
+          router.push("/customer/dashboard");
+          router.refresh();
+        } else if (finalRole === 'WORKER') {
           router.push("/worker/dashboard");
+          router.refresh(); // Crucial: forces Next.js to refetch server components with new cookies
         } else {
           router.push("/customer/dashboard");
+          router.refresh();
         }
       } else {
         router.push("/");
+        router.refresh();
       }
       
     } catch (err: any) {

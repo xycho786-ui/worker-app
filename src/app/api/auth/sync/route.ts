@@ -48,9 +48,11 @@ export async function POST(request: Request) {
 
     if (existingUsers.length > 0) {
       console.log('API /api/auth/sync: User found by email, updating details');
+      // Intentionally omitting role update to prevent accidental role downgrades on login
+      // The role should only be set on initial signup
       const updated = await sql`
         UPDATE "User" 
-        SET id = ${id}, name = ${name}, phone = ${userPhone}, role = CAST(${userRole} AS "Role"), "updatedAt" = NOW()
+        SET id = ${id}, name = ${name}, phone = COALESCE(${userPhone}, phone), "updatedAt" = NOW()
         WHERE email = ${email}
         RETURNING *
       `;
